@@ -1,0 +1,42 @@
+{
+  "amount": 0.00000000,
+  "fee": -0.00000421,
+  "confirmations": 0,
+  "trusted": true,
+  "txid": "dea08b1b3e8595314a7affd5e0299b81537c48eb78b8634d317f0c4f44011d5f",
+  "wtxid": "df9cc5342bca17c969b665ae32f133dd1d0d86b6b8e09fa0c4ce41898f416a29",
+  "walletconflicts": [
+  ],
+  "mempoolconflicts": [
+  ],
+  "time": 1784773013,
+  "timereceived": 1784773013,
+  "bip125-replaceable": "yes",
+  "details": [
+    {
+      "address": "tb1qheuvew7svumewwn4nwvu7h3nznr9cmysnhhsv3",
+      "category": "send",
+      "amount": -0.00010000,
+      "label": "experiment-destination",
+      "vout": 1,
+      "fee": -0.00000421,
+      "abandoned": false
+    },
+    {
+      "address": "tb1qheuvew7svumewwn4nwvu7h3nznr9cmysnhhsv3",
+      "parent_descs": [
+        "wpkh([f9ca8edf/84h/1h/0h]tpubDD3uf8WerLsVqk9Czf1syAddofg78B6wpEBc5MYdYGcjiKrcFe6Lup6AwrNjhJ7ZPrtrMzXRct933BjezvrAShhvPzmYh6CycoRCBQWZXVG/0/*)#dskdjcjt"
+      ],
+      "category": "receive",
+      "amount": 0.00010000,
+      "label": "experiment-destination",
+      "vout": 1,
+      "abandoned": false
+    }
+  ],
+  "hex": "020000000001015dc40928f033773c9154fa95a4ac619e294dfab4776fe5602020d356345f88660000000000fdffffff02bcee0400000000001600144db668b024f3b4e14fbb8de2a043520b505ceea71027000000000000160014be78ccbbd06737973a759b99cf5e3314c65c6c900247304402203cbce9f9c5aae61064ed0e2f95ffc43195b3ddc146b932601e4bd8dfe3770c4f022044db035e45b0c48e6ad7c4c83d590225850f0190c8d0411ef4b7333dc7a146040121027f0c5b9943ae75d893b22133fc9c6051c36ff93fcac4b804dea15767fa9c1d8d00000000",
+  "lastprocessedblock": {
+    "hash": "000000000020e67fad084023c0ca8a0698e3a7c794d2ab0787e26285883302a4",
+    "height": 145318
+  }
+}

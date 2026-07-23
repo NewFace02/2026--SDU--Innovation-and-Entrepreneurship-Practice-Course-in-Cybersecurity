@@ -1,0 +1,102 @@
+{
+  "block_bytes": 2083,
+  "parsed_bytes": 2083,
+  "block_hash": "000000000012057bbfe9e5ce7979a8fe06c37ac350808187a97bcce8635404bf",
+  "version": 849559552,
+  "previous_block_hash": "0000000000b4ebcfb04e59fb8125e0c26aebc2af0dc850c55bb4d0e7b47d1465",
+  "header_merkle_root": "af20a4e3aa86a46c636d2ee2631b69a3fe5d677eb5a1135d8b103e97320c2726",
+  "calculated_merkle_root": "af20a4e3aa86a46c636d2ee2631b69a3fe5d677eb5a1135d8b103e97320c2726",
+  "timestamp": 1784780486,
+  "nBits": "1d00ffff",
+  "nonce": 3190817204,
+  "target": "00000000ffff0000000000000000000000000000000000000000000000000000",
+  "hash_integer": "000000000012057bbfe9e5ce7979a8fe06c37ac350808187a97bcce8635404bf",
+  "transaction_count": 8,
+  "transactions": [
+    {
+      "position": 0,
+      "byte_start": 81,
+      "byte_end": 268,
+      "length": 188,
+      "txid": "2526d3c43f26d36cb7683e0f3c5c369ff2819cd3316f70f1d893b26159338473",
+      "wtxid": "2202b18db31e3b6d9d16ad9afc8a349f250205e9b601261a8f762c49b3ab3939",
+      "coinbase": true
+    },
+    {
+      "position": 1,
+      "byte_start": 269,
+      "byte_end": 490,
+      "length": 222,
+      "txid": "ce77c7924078ecff60f06a5fed4108f403d8de3879dd2a791917a8f19f3bf1a7",
+      "wtxid": "d8eb208bde13438e30f94d290408f4ea624c1123956480e1193f0b3de097b9ab",
+      "coinbase": false
+    },
+    {
+      "position": 2,
+      "byte_start": 491,
+      "byte_end": 712,
+      "length": 222,
+      "txid": "8c2afa41d1086d0c826c4dcd93c141830d3591468a0594ba652d634d7082a189",
+      "wtxid": "c559d39315546b32f6e5570b657d26be260767005c729809394e835621a5d707",
+      "coinbase": false
+    },
+    {
+      "position": 3,
+      "byte_start": 713,
+      "byte_end": 934,
+      "length": 222,
+      "txid": "88a6724da88336100e1390a24c4868965ba454329533577da981d361a9ba46be",
+      "wtxid": "78601ef29068b3795c53b3f847cb805ae5fedab818dd3254dde5c9902ee3ae6e",
+      "coinbase": false
+    },
+    {
+      "position": 4,
+      "byte_start": 935,
+      "byte_end": 1156,
+      "length": 222,
+      "txid": "2042f0522f221a7740f576f60b2a9639eb1b319c36986fdf81df08c14d804ad4",
+      "wtxid": "ebeb333f9680ca27af0c7a15d4e51f401363b5df34f11eb561f02f8e768f2d2c",
+      "coinbase": false
+    },
+    {
+      "position": 5,
+      "byte_start": 1157,
+      "byte_end": 1378,
+      "length": 222,
+      "txid": "ce2dc3e9118fb0b203ad40a0fade160f3bae715a0c4ea2957abbcd777f5739fa",
+      "wtxid": "32675acfe7564cf07b4f1c282e3c666c486d63ec0abe5fd05630fd5fa384e747",
+      "coinbase": false
+    },
+    {
+      "position": 6,
+      "byte_start": 1379,
+      "byte_end": 1690,
+      "length": 312,
+      "txid": "f055c418e2da13b45c96759b9142b26f611c1b90b71b8f2fe84adcf0322a7e57",
+      "wtxid": "e44f350f292c7b7ca520cf0d460eb839febc6376fa0254570c0c64c90361be74",
+      "coinbase": false
+    },
+    {
+      "position": 7,
+      "byte_start": 1691,
+      "byte_end": 2082,
+      "length": 392,
+      "txid": "1d81893475a1ff1b9fa5a61c8132dae3256dbfe199b391a8a0613dc82b9f4fdb",
+      "wtxid": "1bc5d2b06c20add6a1d01bacbab1407202c0f7a5df8b0c1019e7d8e6cbf00202",
+      "coinbase": false
+    }
+  ],
+  "witness_merkle_root": "b9233c8d1e679864d92b9754262dfd1239c36a9f1c4b9389980e37f50f20d467",
+  "coinbase_reserved_value": "0000000000000000000000000000000000000000000000000000000000000000",
+  "stored_witness_commitment": "b36e61fb7af98bde2bca631f60d4499d42dbd77f27779a2b1f3201041e5d0246",
+  "calculated_witness_commitment": "b36e61fb7af98bde2bca631f60d4499d42dbd77f27779a2b1f3201041e5d0246",
+  "checks": {
+    "all_block_bytes_consumed": true,
+    "transaction_count": true,
+    "block_hash": true,
+    "proof_of_work": true,
+    "merkle_root": true,
+    "witness_commitment": true,
+    "coinbase_first": true
+  }
+}

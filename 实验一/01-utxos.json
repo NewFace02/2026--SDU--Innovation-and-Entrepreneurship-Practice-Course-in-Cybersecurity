@@ -1,0 +1,21 @@
+[
+  {
+    "txid": "66885f3456d3202060e56f77b4fa4d299e61aca495fa54913c7733f02809c45d",
+    "vout": 0,
+    "address": "tb1qw8s94yguv2gdxa6ftpd74dpr6smx6tcx80nrzq",
+    "label": "funding",
+    "scriptPubKey": "001471e05a911c6290d37749585beab423d4366d2f06",
+    "amount": 0.00333681,
+    "confirmations": 0,
+    "ancestorcount": 1,
+    "ancestorsize": 141,
+    "ancestorfees": 143,
+    "spendable": true,
+    "solvable": true,
+    "desc": "wpkh([f9ca8edf/84h/1h/0h/0/2]027f0c5b9943ae75d893b22133fc9c6051c36ff93fcac4b804dea15767fa9c1d8d)#j48spn9z",
+    "parent_descs": [
+      "wpkh([f9ca8edf/84h/1h/0h]tpubDD3uf8WerLsVqk9Czf1syAddofg78B6wpEBc5MYdYGcjiKrcFe6Lup6AwrNjhJ7ZPrtrMzXRct933BjezvrAShhvPzmYh6CycoRCBQWZXVG/0/*)#dskdjcjt"
+    ],
+    "safe": false
+  }
+]

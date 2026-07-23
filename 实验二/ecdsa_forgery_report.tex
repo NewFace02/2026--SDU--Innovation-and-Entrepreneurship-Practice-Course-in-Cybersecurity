@@ -1,0 +1,425 @@
+\documentclass[UTF8,a4paper,12pt]{ctexart}
+
+\usepackage{amsmath,amssymb}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{longtable}
+
+\geometry{left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+\lstdefinestyle{cmd}{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  columns=fullflexible,
+  frame=single,
+  backgroundcolor=\color{gray!8},
+  showstringspaces=false,
+  keepspaces=true
+}
+\lstdefinestyle{python}{
+  language=Python,
+  basicstyle=\ttfamily\scriptsize,
+  breaklines=true,
+  columns=fullflexible,
+  frame=single,
+  backgroundcolor=\color{gray!5},
+  showstringspaces=false
+}
+\newcommand{\code}[1]{\texttt{\detokenize{#1}}}
+\newcommand{\hexline}[1]{\par\noindent\texttt{\scriptsize\detokenize{#1}}\par}
+
+\title{ECDSA 摘要未绑定时的存在性伪造\\及 libsecp256k1 安全与性能分析}
+\author{小组成员：宋佳原、宋曰琦、杜昊霖}
+\date{2026年7月}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+\section{实验目的}
+
+本实验研究 ECDSA 验证接口直接接受 32 字节消息摘要时的安全边界。目标是在不知道
+私钥的条件下，按照课件给出的构造生成一个能够通过验证的摘要--签名对
+$(e',r',s')$，并证明该结果并不能伪造攻击者预先指定的消息。实验进一步检查
+Bitcoin Core 官方 \code{libsecp256k1} 仓库，分析接口如何警告调用者绑定原始
+消息，并从密码算法角度研究常数时间修复、标量乘法优化、模逆算法和预计算表之间的
+安全--性能权衡。
+
+\section{实验环境与材料}
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{ll}
+    \toprule
+    项目 & 内容 \\
+    \midrule
+    实验平台 & Ubuntu 20.04 / Windows WSL \\
+    实现语言 & Python 3，仅标准库 \\
+    椭圆曲线 & secp256k1 \\
+    哈希函数 & SHA-256 \\
+    审计仓库 & \url{https://github.com/bitcoin-core/secp256k1} \\
+    仓库提交 & \code{d2d04864ef9b056151603a3ced7980958b058028} \\
+    报告编译 & Windows TeX Live 2024，XeLaTeX \\
+    \bottomrule
+  \end{tabular}
+  \caption{实验环境}
+\end{table}
+
+实验代码没有调用现成 ECDSA 库，而是实现有限域模逆、椭圆曲线点加、倍点和双倍加
+标量乘，以便直接观察数学等式。该实现仅用于教学，不具备生产环境需要的常数时间、
+故障攻击防护和密钥清理能力。
+
+\section{ECDSA 数学基础}
+
+\subsection{secp256k1 参数}
+
+secp256k1 定义在有限域 $\mathbb F_p$ 上：
+\[
+  E: y^2=x^3+7\pmod p,
+\]
+其中
+\[
+ p=2^{256}-2^{32}-977,
+\]
+生成元为 $G$，其素数阶为
+\[
+ n=\mathtt{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141}.
+\]
+私钥 $d\in\mathbb Z_n^*$，公钥为 $P=dG$。
+
+\subsection{签名}
+
+令消息摘要整数为 $e=H(m)\bmod n$，签名者随机选择
+$k\in\mathbb Z_n^*$，计算
+\[
+ R=kG=(x_R,y_R),\qquad r=x_R\bmod n,
+\]
+以及
+\[
+ s=k^{-1}(e+dr)\bmod n.
+\]
+签名为 $(r,s)$。如果 $r=0$ 或 $s=0$，应重新选择 $k$。
+
+\subsection{验证}
+
+验证者首先检查 $1\le r,s<n$，然后计算
+\[
+ w=s^{-1}\bmod n,\qquad u_1=ew\bmod n,\qquad u_2=rw\bmod n,
+\]
+\[
+ R'=u_1G+u_2P=(x',y').
+\]
+当 $R'$ 不是无穷远点且 $x'\bmod n=r$ 时接受。正确性来自
+\[
+\begin{aligned}
+R'&=es^{-1}G+rs^{-1}P\\
+  &=s^{-1}(e+rd)G\\
+  &=k(e+rd)^{-1}(e+rd)G=kG=R.
+\end{aligned}
+\]
+
+\section{摘要未绑定时的存在性伪造}
+
+\subsection{攻击构造}
+
+攻击者只知道公钥 $P$，任取非零 $u,v\in\mathbb Z_n^*$，计算
+\[
+ R'=uG+vP=(x',y'),\qquad r'=x'\bmod n.
+\]
+若 $r'=0$ 则重新选择 $u,v$。定义
+\[
+ s'=r'v^{-1}\bmod n,qquad e'=r'uv^{-1}\bmod n.
+\]
+于是
+\[
+ (s')^{-1}r'=v\pmod n,qquad (s')^{-1}e'=u\pmod n,
+\]
+验证器计算得到
+\[
+(s')^{-1}(e'G+r'P)=uG+vP=R'.
+\]
+其横坐标模 $n$ 恰为 $r'$，所以 $(r',s')$ 是摘要 $e'$ 下的有效签名，而攻击者
+从未知道 $d$。
+
+\subsection{为什么这不是破解 ECDSA}
+
+攻击者不能先指定消息 $m^*$ 再要求 $e'=H(m^*)$。构造中的 $e'$ 是由 $u,v,r'$
+反推出来的随机标量。要把它解释成某个指定消息，需要找到
+\[
+H(m^*)\equiv e'\pmod n,
+\]
+这相当于攻击 SHA-256 的原像性质。因此，本实验展示的是 existential forgery for an
+attacker-chosen digest，而不是在标准 EUF-CMA 模型下对指定消息的伪造。
+
+真正的问题出在应用层：若验证方接收来自不可信输入的 \code{msghash32}，却没有自己
+从协议规定的消息序列化计算哈希，那么“签名验证通过”只证明某个椭圆曲线等式成立，
+不再证明签名者认可了业务消息。
+
+\section{实验实现}
+
+\subsection{曲线运算}
+
+代码使用仿射坐标。不同点相加的斜率为
+\[
+ \lambda=(y_2-y_1)(x_2-x_1)^{-1}\pmod p,
+\]
+倍点斜率为
+\[
+ \lambda=3x_1^2(2y_1)^{-1}\pmod p.
+\]
+结果坐标为
+\[
+x_3=\lambda^2-x_1-x_2,qquad
+y_3=\lambda(x_1-x_3)-y_1\pmod p.
+\]
+标量乘使用 double-and-add。所有参数固定为可复现实验值；固定 nonce 绝不能用于真实
+签名，因为重复或可预测 nonce 会泄露私钥。
+
+\subsection{核心伪造代码}
+
+\begin{lstlisting}[style=python]
+def forge_for_chosen_digest(public_key, u, v):
+    r_point = point_add(scalar_mul(u, G),
+                        scalar_mul(v, public_key))
+    r = r_point.x % N
+    v_inv = inverse(v, N)
+    s = r * v_inv % N
+    e = r * u * v_inv % N
+    return e, (r, s), r_point
+\end{lstlisting}
+
+程序同时执行四项检查：正常签名通过；伪造验证方程成立；伪造摘要通过；同一伪造
+签名对预先指定消息摘要失败。
+
+\section{实验结果}
+
+运行命令：
+\begin{lstlisting}[style=cmd]
+python3 ecdsa_digest_forgery.py | tee forgery_result.txt
+\end{lstlisting}
+
+实际输出如下：
+\lstinputlisting[style=cmd]{forgery_result.txt}
+
+结果汇总见表~\ref{tab:result}。
+\begin{table}[h]
+  \centering
+  \begin{tabular}{p{8.2cm}c}
+    \toprule
+    检查项目 & 结果 \\
+    \midrule
+    使用私钥生成的正常签名验证 & PASS \\
+    伪造点满足 $R'=uG+vP$ & PASS \\
+    $(e',r',s')$ 在公钥 $P$ 下验证 & PASS \\
+    $e'$ 等于目标消息 SHA-256 & False \\
+    $(r',s')$ 验证目标消息摘要 & FAIL（预期）\\
+    \bottomrule
+  \end{tabular}
+  \caption{ECDSA 摘要伪造实验结果}\label{tab:result}
+\end{table}
+
+实验同时给出了正例和反例：如果只展示“伪造摘要验证 PASS”，容易误解成 ECDSA 已被
+破解；目标消息验证 FAIL 则明确限定了结论。
+
+\section{libsecp256k1 接口审计}
+
+\subsection{API 已明确警告该误用}
+
+当前官方仓库 \code{include/secp256k1.h} 中，
+\code{secp256k1_ecdsa_verify} 接收 32 字节 \code{msghash32}。其注释明确要求：
+验证者必须自行对消息应用密码哈希函数，不能直接接受外部提供的摘要，否则无需私钥
+也很容易构造“有效”签名。这与本实验的数学构造完全对应。
+
+这种 API 设计有现实原因：Bitcoin 的签名摘要并非简单的
+$\mathrm{SHA256}(m)$，而是由交易版本、输入、输出、金额、Script、locktime 和
+sighash 类型按共识规则序列化后计算。底层曲线库不可能自行理解所有上层协议，因此
+摘要绑定必须由 Bitcoin Core 的交易签名逻辑完成。
+
+\subsection{Low-S 与本实验的区别}
+
+同一头文件还指出 ECDSA 存在 $(r,s)\mapsto(r,n-s)$ 的签名可塑性，库只接受 low-S
+形式。Low-S 解决的是“同一消息具有两个等价签名”的规范化问题；本实验研究的是
+“应用接受攻击者选择的摘要”。前者不能修复后者，二者必须区分。
+
+\section{安全修复案例：编译器破坏常数时间性质}
+
+\subsection{Clang 14 修复}
+
+官方 changelog 的 v0.3.1 记录：Clang 14 及更新版本可能将内存对象的条件移动编译为
+依赖秘密数据的控制流或内存访问，使库面临时间侧信道风险。修复目标是恢复
+secret-independent control flow 和 secret-independent memory access，并加入
+Wycheproof 的 Bitcoin low-S ECDSA 测试向量。
+
+密码代码“源代码看起来无分支”并不充分。优化编译器可以识别掩码或条件移动语义，
+重新生成分支；若分支方向或查表地址依赖私钥位，攻击者可通过多次计时、cache 或
+分支预测观测逐步推断秘密。因而常数时间性质必须对最终机器码和具体工具链测试。
+
+\subsection{GCC 13.1 ECDH 修复}
+
+v0.3.2 又记录 GCC 13.1 对 ECDH 路径产生 secret-dependent control flow 的问题。
+这说明侧信道安全不是一次性属性：源代码、编译器版本、优化选项和 CPU 共同决定实际
+执行轨迹。仓库后来增加未发布 GCC/Clang 快照测试，以便提前发现类似误编译。
+
+\subsection{数学上为什么需要常数时间}
+
+标量乘
+\[
+Q=dP
+\]
+若使用朴素 double-and-add，则每个私钥比特为 1 时多执行一次点加。运行时间近似与
+Hamming weight $\mathrm{wt}(d)$ 相关；查表算法若直接以秘密窗口为数组下标，还会泄露
+窗口值。libsecp256k1 对秘密标量使用无数据依赖分支、无秘密索引的条件移动，并提供
+context randomization 作为纵深防御。
+
+\section{性能改进及数学依据}
+
+\subsection{ECDSA 验证的联合标量乘}
+
+验证的主要成本是
+\[
+R=u_1G+u_2P.
+\]
+仓库 README 说明验证路径结合以下技术：
+\begin{itemize}
+  \item wNAF（windowed non-adjacent form）降低非零数字密度；
+  \item 对固定生成元 $G$ 使用更大窗口和预计算倍点；
+  \item 使用 Shamir's trick 同时计算两个标量乘；
+  \item 使用 secp256k1 的高效自同态将一个 256 位标量拆成两个约 128 位标量。
+\end{itemize}
+
+wNAF 表示保证非零数字之间至少有 $w-1$ 个零，平均非零密度约为 $1/(w+1)$，因此
+点加次数明显少于普通二进制展开。窗口越大，在线点加越少，但预计算表越大，形成
+时间--空间权衡。
+
+\subsection{GLV 自同态}
+
+secp256k1 存在易计算自同态
+\[
+\phi(x,y)=(\beta x,y),\qquad \phi(P)=\lambda P,
+\]
+其中 $\beta^3=1\pmod p$、$\lambda^3=1\pmod n$。库将
+\[
+k=k_1+\lambda k_2\pmod n
+\]
+分解为 $|k_1|,|k_2|$ 约 128 位，于是
+\[
+kP=k_1P+k_2\phi(P).
+\]
+两个较短标量可联合计算，减少加倍链长度。仓库
+\code{src/scalar_impl.h} 还给出格基、舍入常量以及分解界的验证说明。
+
+\subsection{生成元预计算与发布性能数据}
+
+v0.5.0 更换签名和公钥生成使用的点乘算法，并把预计算表配置改为 2、22 或 86 KiB；
+v0.5.1 将默认表从 22 KiB 提升到 86 KiB。更大的固定基表用内存换取更少在线点运算。
+
+v0.4.1 移除旧的手写 x86\_64 域运算汇编，因为现代编译器生成了更高效代码。官方在
+GCC 10.5.0 下报告，当原配置启用手写汇编时，修改后
+\code{secp256k1_ecdsa_verify} 和 Schnorr 验证约加速 10\%。这说明“汇编必然比 C
+快”并不成立，持续基准测试比实现语言标签更可靠。
+
+v0.2.0 则为 MSVC x86\_64/arm64 增加 128 位宽乘法支持，官方报告约 20\% 加速。
+底层原因是 4 个 64 位 limb 的标量/域运算可以直接利用宽乘积，减少拆分为较小 limb
+时的指令和进位处理。
+
+\subsection{safegcd 模逆}
+
+ECDSA 签名需要 $k^{-1}\bmod n$，验证需要 $s^{-1}\bmod n$。库采用修改后的
+safegcd/divsteps。官方实现文档给出：任意 256 位输入在 724 个 divsteps 内存在上界，
+因此秘密模逆可固定迭代次数，并用位掩码替代条件分支；对公开数据则可使用更快的
+variable-time 版本。这体现了合理原则：秘密路径优先侧信道安全，公开验证数据路径
+可以使用可变时间优化。
+
+\section{Bug 修复与性能改进汇总}
+
+\begin{longtable}{p{2cm}p{3.2cm}p{4.2cm}p{4.2cm}}
+  \caption{libsecp256k1 相关改进}\label{tab:changes}\\
+  \toprule
+  版本 & 类型 & 问题/改进 & 密码学意义 \\
+  \midrule
+  \endfirsthead
+  \toprule 版本 & 类型 & 问题/改进 & 密码学意义 \\
+  \midrule
+  \endhead
+  v0.3.1 & 安全修复 & Clang 14 条件移动产生秘密相关控制流/内存访问 & 防止计时与 cache 侧信道 \\
+  v0.3.2 & 安全修复 & GCC 13.1 ECDH 产生秘密相关控制流 & 恢复秘密标量乘常数时间性质 \\
+  v0.4.1 & 性能 & 移除落后的 x86\_64 手写域运算汇编 & 官方报告验证约加速 10\% \\
+  v0.5.0 & 性能 & 更新签名/公钥生成点乘与预计算配置 & 用内存换固定基点乘速度 \\
+  v0.5.1 & 性能 & 默认预计算表 22 KiB 增至 86 KiB & 减少在线点加 \\
+  v0.6.0/0.7.1 & 纵深防御 & 更稳健清理栈上秘密并扩大清理范围 & 缩短私钥材料残留时间 \\
+  \bottomrule
+\end{longtable}
+
+\section{对 Bitcoin 使用密码算法的启示}
+
+\begin{enumerate}
+  \item \textbf{摘要属于协议，不只属于曲线库。} Bitcoin 必须由共识规定的 sighash
+  序列化产生摘要，不能让网络对手直接指定 \code{msghash32}。
+  \item \textbf{域分离和上下文绑定不可省略。} 应把交易版本、输入索引、prevout
+  金额、Script、输出和 sighash 类型绑定到摘要，防止签名被跨上下文解释。
+  \item \textbf{私钥路径和公开验证路径可以不同。} 签名、公钥生成必须常数时间；
+  验证只处理公开量，可安全使用 variable-time 算法提升吞吐。
+  \item \textbf{编译器是密码实现可信边界的一部分。} 升级编译器后必须重新运行
+  constant-time 检查、测试向量和基准。
+  \item \textbf{性能优化必须保持代数等价和边界证明。} GLV 分解、wNAF、预计算和
+  safegcd 均需要明确不变量、范围界和交叉测试，不能只依据微基准合入。
+\end{enumerate}
+
+\section{实验限制}
+
+本实验 Python 实现使用仿射坐标和变量时间 double-and-add，其目的仅是验证公式，
+不能用于真实密钥。实验环境自带 CMake 3.16，低于当前仓库要求的 3.22，且未安装
+Autoconf，因此没有在本机重新生成官方 C 基准数据；报告中的 10\% 和 20\% 数字均
+明确引用官方 changelog，而不是伪装成本机测量。源代码审计和摘要伪造实验不受这一
+构建限制影响。
+
+\section{结论}
+
+实验在不知道私钥的情况下构造了有效的 $(e',r',s')$，并从代数和程序两方面证明其
+通过 ECDSA 验证；同时证明该签名不能验证预先指定消息的 SHA-256。这说明漏洞并不在
+ECDSA 方程，而在应用是否把摘要可信地绑定到消息和业务上下文。
+
+对官方 libsecp256k1 的检查进一步表明，高质量 Bitcoin 密码实现同时依赖：严格 API
+语义、low-S 规范化、秘密路径常数时间、编译器级侧信道测试、wNAF/GLV/联合标量乘、
+固定基预计算以及有界 safegcd 模逆。安全与性能不是彼此独立的目标，而是在公开量与
+秘密量、时间与空间、通用接口与协议绑定之间进行可证明的工程权衡。
+
+\appendix
+\section{复现命令}
+
+\begin{lstlisting}[style=cmd]
+cd 实验二
+python3 ecdsa_digest_forgery.py | tee forgery_result.txt
+
+# 记录审计的仓库提交
+git -C secp256k1 rev-parse HEAD
+
+# 查看 API 警告、安全修复与性能记录
+sed -n '590,635p' secp256k1/include/secp256k1.h
+sed -n '1,210p' secp256k1/CHANGELOG.md
+sed -n '35,65p' secp256k1/README.md
+\end{lstlisting}
+
+\section{参考资料}
+
+\begin{enumerate}
+  \item Bitcoin Core, \emph{libsecp256k1 official repository},
+  \url{https://github.com/bitcoin-core/secp256k1}。
+  \item libsecp256k1, \emph{ECDSA verification API documentation},
+  \url{https://github.com/bitcoin-core/secp256k1/blob/master/include/secp256k1.h}。
+  \item libsecp256k1, \emph{Changelog},
+  \url{https://github.com/bitcoin-core/secp256k1/blob/master/CHANGELOG.md}。
+  \item libsecp256k1, \emph{safegcd implementation explained},
+  \url{https://github.com/bitcoin-core/secp256k1/blob/master/doc/safegcd_implementation.md}。
+  \item T. Pornin, \emph{Why can a signature be created without the private key when the hash is provided?},
+  \url{https://bitcoin.stackexchange.com/a/81116/35586}。
+  \item D. J. Bernstein and B.-Y. Yang, \emph{Fast constant-time gcd computation and modular inversion},
+  \url{https://gcd.cr.yp.to/papers.html#safegcd}。
+\end{enumerate}
+
+\end{document}

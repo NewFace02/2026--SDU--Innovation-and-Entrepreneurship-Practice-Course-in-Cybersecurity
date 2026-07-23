@@ -1,0 +1,33 @@
+{
+  "txid": "eec5cb745e1eb8055c12713a0d79a4a36972e1b599e62d943a963cb8ea9a4dee",
+  "hash": "eec5cb745e1eb8055c12713a0d79a4a36972e1b599e62d943a963cb8ea9a4dee",
+  "version": 2,
+  "size": 82,
+  "vsize": 82,
+  "weight": 328,
+  "locktime": 0,
+  "vin": [
+    {
+      "txid": "66885f3456d3202060e56f77b4fa4d299e61aca495fa54913c7733f02809c45d",
+      "vout": 0,
+      "scriptSig": {
+        "asm": "",
+        "hex": ""
+      },
+      "sequence": 4294967293
+    }
+  ],
+  "vout": [
+    {
+      "value": 0.00010000,
+      "n": 0,
+      "scriptPubKey": {
+        "asm": "0 be78ccbbd06737973a759b99cf5e3314c65c6c90",
+        "desc": "addr(tb1qheuvew7svumewwn4nwvu7h3nznr9cmysnhhsv3)#na46myp6",
+        "hex": "0014be78ccbbd06737973a759b99cf5e3314c65c6c90",
+        "address": "tb1qheuvew7svumewwn4nwvu7h3nznr9cmysnhhsv3",
+        "type": "witness_v0_keyhash"
+      }
+    }
+  ]
+}

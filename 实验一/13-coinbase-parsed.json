@@ -1,0 +1,262 @@
+{
+  "summary": {
+    "bytes": 188,
+    "parsed_bytes": 188,
+    "segwit": true,
+    "version": 1,
+    "input_count": 1,
+    "output_count": 2,
+    "locktime": 0,
+    "txid": "2526d3c43f26d36cb7683e0f3c5c369ff2819cd3316f70f1d893b26159338473",
+    "wtxid": "2202b18db31e3b6d9d16ad9afc8a349f250205e9b601261a8f762c49b3ab3939",
+    "is_coinbase": true,
+    "coinbase_height": 145319
+  },
+  "inputs": [
+    {
+      "previous_txid": "0000000000000000000000000000000000000000000000000000000000000000",
+      "previous_vout": 4294967295,
+      "scriptSig": "03a7370200040776616a0c0dc0446a0000000000000000",
+      "sequence": 4294967295
+    }
+  ],
+  "outputs": [
+    {
+      "value_sats": 5000002049,
+      "scriptPubKey": "001485e9d16efcd61814f84fd2c8e996768ba43fc31c",
+      "script_type": "P2WPKH: OP_0 PUSH20 85e9d16efcd61814f84fd2c8e996768ba43fc31c"
+    },
+    {
+      "value_sats": 0,
+      "scriptPubKey": "6a24aa21a9edb36e61fb7af98bde2bca631f60d4499d42dbd77f27779a2b1f3201041e5d0246",
+      "script_type": "OP_RETURN 24aa21a9edb36e61fb7af98bde2bca631f60d4499d42dbd77f27779a2b1f3201041e5d0246"
+    }
+  ],
+  "witnesses": [
+    [
+      "0000000000000000000000000000000000000000000000000000000000000000"
+    ]
+  ],
+  "rows": [
+    {
+      "byte_start": 0,
+      "byte_end": 3,
+      "bit_start": 0,
+      "bit_end": 31,
+      "length": 4,
+      "field": "version",
+      "hex": "01000000",
+      "binary": "00000001 00000000 00000000 00000000",
+      "decoded": "1"
+    },
+    {
+      "byte_start": 4,
+      "byte_end": 4,
+      "bit_start": 32,
+      "bit_end": 39,
+      "length": 1,
+      "field": "marker",
+      "hex": "00",
+      "binary": "00000000",
+      "decoded": "SegWit marker"
+    },
+    {
+      "byte_start": 5,
+      "byte_end": 5,
+      "bit_start": 40,
+      "bit_end": 47,
+      "length": 1,
+      "field": "flag",
+      "hex": "01",
+      "binary": "00000001",
+      "decoded": "witness present"
+    },
+    {
+      "byte_start": 6,
+      "byte_end": 6,
+      "bit_start": 48,
+      "bit_end": 55,
+      "length": 1,
+      "field": "input_count",
+      "hex": "01",
+      "binary": "00000001",
+      "decoded": "1"
+    },
+    {
+      "byte_start": 7,
+      "byte_end": 38,
+      "bit_start": 56,
+      "bit_end": 311,
+      "length": 32,
+      "field": "input[0].previous_txid",
+      "hex": "0000000000000000000000000000000000000000000000000000000000000000",
+      "binary": "00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000",
+      "decoded": ""
+    },
+    {
+      "byte_start": 39,
+      "byte_end": 42,
+      "bit_start": 312,
+      "bit_end": 343,
+      "length": 4,
+      "field": "input[0].previous_vout",
+      "hex": "ffffffff",
+      "binary": "11111111 11111111 11111111 11111111",
+      "decoded": ""
+    },
+    {
+      "byte_start": 43,
+      "byte_end": 43,
+      "bit_start": 344,
+      "bit_end": 351,
+      "length": 1,
+      "field": "input[0].scriptSig_length",
+      "hex": "17",
+      "binary": "00010111",
+      "decoded": "23"
+    },
+    {
+      "byte_start": 44,
+      "byte_end": 66,
+      "bit_start": 352,
+      "bit_end": 535,
+      "length": 23,
+      "field": "input[0].scriptSig",
+      "hex": "03a7370200040776616a0c0dc0446a0000000000000000",
+      "binary": "00000011 10100111 00110111 00000010 00000000 00000100 00000111 01110110 01100001 01101010 00001100 00001101 11000000 01000100 01101010 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000",
+      "decoded": "03a7370200040776616a0c0dc0446a0000000000000000"
+    },
+    {
+      "byte_start": 67,
+      "byte_end": 70,
+      "bit_start": 536,
+      "bit_end": 567,
+      "length": 4,
+      "field": "input[0].sequence",
+      "hex": "ffffffff",
+      "binary": "11111111 11111111 11111111 11111111",
+      "decoded": ""
+    },
+    {
+      "byte_start": 71,
+      "byte_end": 71,
+      "bit_start": 568,
+      "bit_end": 575,
+      "length": 1,
+      "field": "output_count",
+      "hex": "02",
+      "binary": "00000010",
+      "decoded": "2"
+    },
+    {
+      "byte_start": 72,
+      "byte_end": 79,
+      "bit_start": 576,
+      "bit_end": 639,
+      "length": 8,
+      "field": "output[0].value",
+      "hex": "01fa052a01000000",
+      "binary": "00000001 11111010 00000101 00101010 00000001 00000000 00000000 00000000",
+      "decoded": "5000002049 sat"
+    },
+    {
+      "byte_start": 80,
+      "byte_end": 80,
+      "bit_start": 640,
+      "bit_end": 647,
+      "length": 1,
+      "field": "output[0].scriptPubKey_length",
+      "hex": "16",
+      "binary": "00010110",
+      "decoded": "22"
+    },
+    {
+      "byte_start": 81,
+      "byte_end": 102,
+      "bit_start": 648,
+      "bit_end": 823,
+      "length": 22,
+      "field": "output[0].scriptPubKey",
+      "hex": "001485e9d16efcd61814f84fd2c8e996768ba43fc31c",
+      "binary": "00000000 00010100 10000101 11101001 11010001 01101110 11111100 11010110 00011000 00010100 11111000 01001111 11010010 11001000 11101001 10010110 01110110 10001011 10100100 00111111 11000011 00011100",
+      "decoded": "P2WPKH: OP_0 PUSH20 85e9d16efcd61814f84fd2c8e996768ba43fc31c"
+    },
+    {
+      "byte_start": 103,
+      "byte_end": 110,
+      "bit_start": 824,
+      "bit_end": 887,
+      "length": 8,
+      "field": "output[1].value",
+      "hex": "0000000000000000",
+      "binary": "00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000",
+      "decoded": "0 sat"
+    },
+    {
+      "byte_start": 111,
+      "byte_end": 111,
+      "bit_start": 888,
+      "bit_end": 895,
+      "length": 1,
+      "field": "output[1].scriptPubKey_length",
+      "hex": "26",
+      "binary": "00100110",
+      "decoded": "38"
+    },
+    {
+      "byte_start": 112,
+      "byte_end": 149,
+      "bit_start": 896,
+      "bit_end": 1199,
+      "length": 38,
+      "field": "output[1].scriptPubKey",
+      "hex": "6a24aa21a9edb36e61fb7af98bde2bca631f60d4499d42dbd77f27779a2b1f3201041e5d0246",
+      "binary": "01101010 00100100 10101010 00100001 10101001 11101101 10110011 01101110 01100001 11111011 01111010 11111001 10001011 11011110 00101011 11001010 01100011 00011111 01100000 11010100 01001001 10011101 01000010 11011011 11010111 01111111 00100111 01110111 10011010 00101011 00011111 00110010 00000001 00000100 00011110 01011101 00000010 01000110",
+      "decoded": "OP_RETURN 24aa21a9edb36e61fb7af98bde2bca631f60d4499d42dbd77f27779a2b1f3201041e5d0246"
+    },
+    {
+      "byte_start": 150,
+      "byte_end": 150,
+      "bit_start": 1200,
+      "bit_end": 1207,
+      "length": 1,
+      "field": "witness[0].item_count",
+      "hex": "01",
+      "binary": "00000001",
+      "decoded": "1"
+    },
+    {
+      "byte_start": 151,
+      "byte_end": 151,
+      "bit_start": 1208,
+      "bit_end": 1215,
+      "length": 1,
+      "field": "witness[0].item[0].length",
+      "hex": "20",
+      "binary": "00100000",
+      "decoded": "32"
+    },
+    {
+      "byte_start": 152,
+      "byte_end": 183,
+      "bit_start": 1216,
+      "bit_end": 1471,
+      "length": 32,
+      "field": "witness[0].item[0]",
+      "hex": "0000000000000000000000000000000000000000000000000000000000000000",
+      "binary": "00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000",
+      "decoded": "32 bytes; possible signature; sighash=0x00"
+    },
+    {
+      "byte_start": 184,
+      "byte_end": 187,
+      "bit_start": 1472,
+      "bit_end": 1503,
+      "length": 4,
+      "field": "locktime",
+      "hex": "00000000",
+      "binary": "00000000 00000000 00000000 00000000",
+      "decoded": "0"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "txid": "dea08b1b3e8595314a7affd5e0299b81537c48eb78b8634d317f0c4f44011d5f",
+  "wtxid": "df9cc5342bca17c969b665ae32f133dd1d0d86b6b8e09fa0c4ce41898f416a29",
+  "version": 2,
+  "size": 222,
+  "vsize": 141,
+  "weight": 561,
+  "locktime": 0,
+  "input_count": 1,
+  "output_count": 2,
+  "witness_item_count": 2,
+  "signature_bytes": 71,
+  "public_key_bytes": 33
+}

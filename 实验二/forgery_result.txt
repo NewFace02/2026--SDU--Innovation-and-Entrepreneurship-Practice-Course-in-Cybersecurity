@@ -1,0 +1,23 @@
+=== secp256k1 ECDSA digest-forgery experiment ===
+public key x       = 84054503a22cd9cb...aa86bdfecf8100d8
+public key y       = 9e5c3164bea46138...f42d26b19389ee4c
+SHA256(message)    = b4295ee1a2bf3ee9...c9f06aaa2ae934b4
+legitimate r       = b268f9412d100717...edf3f4f42b70dedd
+legitimate s       = d55b4d97cbceb1d7...2b0506d67ce8b8c0
+legitimate verify  = PASS
+
+attacker knows private key? NO
+chosen u           = bb0c501e6b81f603...d311d711983c61ab
+chosen v           = 4177418fd0530300...4d96046472632a61
+R' = uG + vP, x'   = e165cd2be6927522...829064f926e1d440
+forged digest e'   = 81767c7b1712a2b1...09f8480d64dd1bd0
+forged r'          = e165cd2be6927522...829064f926e1d440
+forged s'          = d95fec4a6c050882...62e434c00239c19c
+verification equation R'=uG+vP = PASS
+verify chosen digest e'         = PASS
+e' == SHA256(target message)?   = False
+verify target message hash      = FAIL (expected)
+
+CONCLUSION:
+PASS: a valid (digest, signature) pair was created without the private key.
+PASS: it does NOT sign the chosen target message; ECDSA itself is not broken.

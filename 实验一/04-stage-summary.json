@@ -1,0 +1,32 @@
+{
+  "previous_txid": "66885f3456d3202060e56f77b4fa4d299e61aca495fa54913c7733f02809c45d",
+  "destination": "tb1qheuvew7svumewwn4nwvu7h3nznr9cmysnhhsv3",
+  "input_sats": 333681,
+  "output_sats": 333260,
+  "fee_sats": 421,
+  "funded_txid": "dea08b1b3e8595314a7affd5e0299b81537c48eb78b8634d317f0c4f44011d5f",
+  "outputs": [
+    {
+      "value": 0.0032326,
+      "n": 0,
+      "scriptPubKey": {
+        "asm": "0 4db668b024f3b4e14fbb8de2a043520b505ceea7",
+        "desc": "addr(tb1qfkmx3vpy7w6wznam3h32qs6jpdg9em484qqv7s)#8zd54k9y",
+        "hex": "00144db668b024f3b4e14fbb8de2a043520b505ceea7",
+        "address": "tb1qfkmx3vpy7w6wznam3h32qs6jpdg9em484qqv7s",
+        "type": "witness_v0_keyhash"
+      }
+    },
+    {
+      "value": 0.0001,
+      "n": 1,
+      "scriptPubKey": {
+        "asm": "0 be78ccbbd06737973a759b99cf5e3314c65c6c90",
+        "desc": "addr(tb1qheuvew7svumewwn4nwvu7h3nznr9cmysnhhsv3)#na46myp6",
+        "hex": "0014be78ccbbd06737973a759b99cf5e3314c65c6c90",
+        "address": "tb1qheuvew7svumewwn4nwvu7h3nznr9cmysnhhsv3",
+        "type": "witness_v0_keyhash"
+      }
+    }
+  ]
+}

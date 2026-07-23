@@ -1,0 +1,18 @@
+{
+  "block_bytes": 2083,
+  "parsed_bytes": 2083,
+  "block_hash": "000000000012057bbfe9e5ce7979a8fe06c37ac350808187a97bcce8635404bf",
+  "nBits": "1d00ffff",
+  "target": "00000000ffff0000000000000000000000000000000000000000000000000000",
+  "hash_integer": "000000000012057bbfe9e5ce7979a8fe06c37ac350808187a97bcce8635404bf",
+  "transaction_count": 8
+}
+All Block Bytes Consumed: PASS
+Transaction Count: PASS
+Block Hash: PASS
+Proof Of Work: PASS
+Merkle Root: PASS
+Witness Commitment: PASS
+Coinbase First: PASS
+JSON result: 14-block-parsed.json
+Header byte table: 14-block-header-bytes.tsv

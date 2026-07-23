@@ -1,0 +1,447 @@
+\documentclass[UTF8,a4paper,12pt]{ctexart}
+
+\usepackage{amsmath,amssymb}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{subcaption}
+\usepackage{float}
+
+\geometry{left=2.4cm,right=2.4cm,top=2.4cm,bottom=2.4cm}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+\graphicspath{{screenshots/}}
+
+\lstdefinestyle{cmd}{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  columns=fullflexible,
+  frame=single,
+  backgroundcolor=\color{gray!8},
+  keepspaces=true
+}
+\lstdefinestyle{python}{
+  language=Python,
+  basicstyle=\ttfamily\scriptsize,
+  breaklines=true,
+  columns=fullflexible,
+  frame=single,
+  backgroundcolor=\color{gray!5},
+  showstringspaces=false
+}
+
+\newcommand{\code}[1]{\texttt{\detokenize{#1}}}
+\newcommand{\hashtext}[1]{\par\noindent\texttt{\scriptsize\detokenize{#1}}\par}
+\newcommand{\resultfigure}[3]{%
+  \begin{figure}[H]
+    \centering
+    \IfFileExists{screenshots/#1}{%
+      \includegraphics[width=0.94\linewidth,height=0.72\textheight,keepaspectratio]{#1}%
+    }{\fbox{缺少截图：\texttt{#1}}}
+    \caption{#2}\label{#3}
+  \end{figure}
+}
+\newcommand{\resultpair}[6]{%
+  \begin{figure}[H]
+    \centering
+    \begin{subfigure}[t]{0.48\linewidth}
+      \centering\includegraphics[width=\linewidth,height=0.34\textheight,keepaspectratio]{#1}
+      \caption{#2}
+    \end{subfigure}\hfill
+    \begin{subfigure}[t]{0.48\linewidth}
+      \centering\includegraphics[width=\linewidth,height=0.34\textheight,keepaspectratio]{#3}
+      \caption{#4}
+    \end{subfigure}
+    \caption{#5}\label{#6}
+  \end{figure}
+}
+
+\title{Bitcoin Testnet4 交易、区块编码与 PoW 验证实验报告}
+\author{小组成员：宋佳原、宋曰琦、杜昊霖}
+\date{2026年7月}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+\section{实验目的}
+
+本实验在 Bitcoin Testnet4 上构造、签名并广播一笔原生 SegWit（P2WPKH）交易，
+获取交易的 raw hex，并在不依赖 Bitcoin Core 解码接口的条件下按字节和比特解析
+Transaction、Input、Output、锁定脚本和解锁数据。随后选取一个已确认 Testnet4
+区块，解析其 80 字节区块头、全部交易与 Coinbase transaction，独立重算
+txid、wtxid、Merkle root、witness commitment 和区块哈希，最终验证工作量证明
+（Proof of Work, PoW）。
+
+\section{实验环境与分工}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ll}
+    \toprule
+    项目 & 配置 \\
+    \midrule
+    操作系统 & Ubuntu 20.04（Windows/WSL 环境）\\
+    Bitcoin Core & 31.1，网络参数 \code{-testnet4} \\
+    节点模式 & 裁剪节点，\code{prune=1000} \\
+    辅助工具 & \code{bitcoin-cli}、Python 3、\code{jq}、\code{xxd} \\
+    报告编译 & Windows TeX Live/MiKTeX，XeLaTeX \\
+    \bottomrule
+  \end{tabular}
+  \caption{实验环境}
+\end{table}
+
+小组共同完成节点部署、交易构造、二进制解析和结果复核。宋佳原负责节点操作与
+交易广播，宋曰琦负责交易及 Script 字段整理，杜昊霖负责区块、Merkle tree 与
+PoW 验证；三人共同完成报告审阅。
+
+节点同步结果见图~\ref{fig:env-utxo}。节点处于 Testnet4，区块与区块头高度一致，
+\code{verificationprogress} 为 1，且 \code{initialblockdownload} 为 false，说明初始同步完成。
+
+\resultpair{1.png}{Testnet4 节点同步完成}{2.png}{Faucet UTXO 信息}
+{节点状态与实验初始 UTXO}{fig:env-utxo}
+
+\section{实验原理}
+
+\subsection{交易序列化}
+
+SegWit 交易采用如下网络序列化：
+\[
+\begin{aligned}
+&\text{version}\parallel\text{marker}\parallel\text{flag}\parallel
+\text{vin count}\parallel\text{inputs}\\
+&\parallel\text{vout count}\parallel\text{outputs}\parallel
+\text{witnesses}\parallel\text{locktime}.
+\end{aligned}
+\]
+固定宽度整数使用小端编码，数组长度和脚本长度使用 CompactSize。对于原生
+P2WPKH，\code{scriptSig} 为空，签名与公钥位于 witness 栈。txid 排除
+marker、flag 和 witness；wtxid 对完整交易序列化做两次 SHA-256：
+\[
+ \mathrm{txid}=\operatorname{rev}(\mathrm{SHA256d}(T_{\rm stripped})),\qquad
+ \mathrm{wtxid}=\operatorname{rev}(\mathrm{SHA256d}(T_{\rm full})).
+\]
+
+\subsection{P2WPKH Script}
+
+本实验两个输出的锁定脚本均为
+\[
+  \mathtt{00\ 14\ <20\mbox{-}byte\ HASH160(pubkey)>},
+\]
+其中 \code{00} 是 witness version 0，\code{14} 表示后续 program 长 20 字节。
+解锁时 witness 栈依次压入 DER-ECDSA 签名和 33 字节压缩公钥。传统语境中的
+unlocking script 是 \code{scriptSig}；在本实验原生 SegWit 输入中它必须为空，
+解锁数据已迁移到 witness。
+
+\subsection{区块、Merkle tree 与 PoW}
+
+区块由 80 字节头部、CompactSize 交易数和交易列表组成。区块头字段见
+表~\ref{tab:header}。
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrrl}
+    \toprule
+    字节偏移 & 比特偏移 & 长度/字节 & 字段 & 编码 \\
+    \midrule
+    0  & 0--31   & 4  & version & 小端 \\
+    4  & 32--287 & 32 & previous block hash & 内部字节序 \\
+    36 & 288--543& 32 & Merkle root & 内部字节序 \\
+    68 & 544--575& 4  & timestamp & 小端 \\
+    72 & 576--607& 4  & nBits & compact target，小端 \\
+    76 & 608--639& 4  & nonce & 小端 \\
+    \bottomrule
+  \end{tabular}
+  \caption{80 字节区块头格式}\label{tab:header}
+\end{table}
+
+交易 txid 作为叶子逐层两两拼接并做 SHA256d；奇数层复制最后一个结点，最终得到
+Merkle root。PoW 将区块头做 SHA256d，并验证
+\[
+  H_{\rm integer}\leq \mathrm{target},\qquad
+  \mathrm{target}=c\cdot 256^{e-3},
+\]
+其中 $c$ 和 $e$ 由 nBits 的 coefficient 与 exponent 给出。
+
+\section{Testnet4 交易构造与广播}
+
+\subsection{未签名交易}
+
+Faucet UTXO 为 333681 sat，输入 outpoint 为：
+\hashtext{66885f3456d3202060e56f77b4fa4d299e61aca495fa54913c7733f02809c45d:0}
+目标地址为：
+\hashtext{tb1qheuvew7svumewwn4nwvu7h3nznr9cmysnhhsv3}
+发送金额为 10000 sat。使用 \code{createrawtransaction} 后得到一个输入和一个输出，
+输入 \code{scriptSig} 为空，sequence 为 $4294967293=\mathtt{0xfffffffd}$，支持
+BIP125 RBF。未签名交易的 Core 解码见图~\ref{fig:unsigned-funded}。
+
+\resultpair{3.png}{未签名交易}{4A.png}{手续费与找零位置}
+{交易构造与资金补全}{fig:unsigned-funded}
+
+\subsection{找零与金额守恒}
+
+调用 \code{fundrawtransaction}，指定 2 sat/vB 并允许使用尚未确认的 faucet
+输入。钱包添加 323260 sat 找零，最终金额关系为
+\[
+333681=323260+10000+421\quad(\mathrm{sat}).
+\]
+构造时父交易尚未确认，Bitcoin Core 会兼顾父子交易包的目标费率，因此子交易最终
+手续费为 421 sat。广播前父交易已确认，故子交易自身费率为
+$421/141\approx2.986$ sat/vB。两个输出及守恒检查见图~\ref{fig:outputs-value}。
+
+\resultpair{4B.png}{添加找零后的输入输出}{5.png}{手续费独立核对}
+{交易输出与手续费}{fig:outputs-value}
+\resultfigure{6.png}{输入、找零、目标输出与手续费的金额守恒}{fig:value-pass}
+
+\subsection{签名和 witness}
+
+钱包使用对应私钥签名后，\code{complete=true}。最终交易长 222 字节，vsize 为
+141，weight 为 561。txid 与 wtxid 分别为：
+\hashtext{dea08b1b3e8595314a7affd5e0299b81537c48eb78b8634d317f0c4f44011d5f}
+\hashtext{df9cc5342bca17c969b665ae32f133dd1d0d86b6b8e09fa0c4ce41898f416a29}
+witness 包含 71 字节 DER-ECDSA 签名（末尾 \code{01}，即 SIGHASH\_ALL）和
+33 字节压缩公钥。由于签名只写入 witness，funded transaction 与签名后交易的
+txid 相同，而 wtxid 不同。
+
+\resultpair{7.png}{钱包签名完成}{8.png}{txid 与 wtxid 分离验证}
+{SegWit 交易签名结果}{fig:sign-hashes}
+\resultpair{9.png}{P2WPKH witness 栈}{10.png}{两个 P2WPKH 输出脚本}
+{解锁数据与锁定脚本}{fig:witness-output}
+
+\subsection{预验证和广播}
+
+广播前 \code{testmempoolaccept} 返回 \code{allowed=true}；随后
+\code{sendrawtransaction} 返回的 txid 与本地解码值完全一致。mempool 中
+\code{unbroadcast=false}，表明交易已经传播，且 \code{depends=[]} 表明父交易
+已经确认。验证结果和公共浏览器记录见图~\ref{fig:broadcast}、图~\ref{fig:explorer}。
+
+\resultpair{11.png}{mempool 预验证通过}{12.png}{广播 txid 一致性验证}
+{交易预验证与广播}{fig:broadcast}
+\resultpair{13.png}{广播后的 mempool 状态}{14.png}{公共 Testnet4 浏览器记录}
+{交易网络传播证据}{fig:explorer}
+
+实验时间窗口内该交易仍为未确认状态。由于实验要求的交易格式、签名和广播均可在
+mempool 阶段验证，而 Testnet4 的出块和矿工选包具有不确定性，后续区块实验选用
+另一个已确认 Testnet4 区块。报告不将该区块描述为实验交易所在区块。
+
+\section{Raw Transaction 独立逐字节解析}
+
+编写 \code{parse_tx.py}，直接读取 \code{05-signed.hex}，维护字节游标并输出
+byte range、bit range、字段长度、hex、完整 binary 和解释。解析器独立重建 stripped
+serialization 和 full serialization，重算 txid 与 wtxid。
+
+实验交易的主要字段见表~\ref{tab:txfields}。
+
+\begin{longtable}{p{2.0cm}p{2.0cm}p{3.5cm}p{6.6cm}}
+  \caption{实验交易的逐字段编码}\label{tab:txfields}\\
+  \toprule
+  字节偏移 & 长度 & 字段 & 解析结果 \\
+  \midrule
+  \endfirsthead
+  \toprule 字节偏移 & 长度 & 字段 & 解析结果 \\
+  \midrule
+  \endhead
+  0--3 & 4 & version & 2，小端编码 \\
+  4 & 1 & marker & \code{00} \\
+  5 & 1 & flag & \code{01}，存在 witness \\
+  6 & 1 & input count & 1 \\
+  7--38 & 32 & previous txid & 反转后为 faucet txid \\
+  39--42 & 4 & previous vout & 0 \\
+  43 & 1 & scriptSig length & 0 \\
+  44--47 & 4 & sequence & \code{fdffffff}，即 $0xfffffffd$ \\
+  48 & 1 & output count & 2 \\
+  后续 & 可变 & outputs & 323260 sat 找零与 10000 sat 目标输出 \\
+  后续 & 可变 & witness & 71 字节签名、33 字节压缩公钥 \\
+  末尾4字节 & 4 & locktime & 0 \\
+  \bottomrule
+\end{longtable}
+
+逐字节与逐比特输出见图~\ref{fig:tx-parser-pass} 至图~\ref{fig:bit-table}。
+
+\resultfigure{24.png}{独立解析 222 字节交易并验证 txid、wtxid}{fig:tx-parser-pass}
+\resultpair{25.png}{交易字段 byte/bit offset}{26.png}{witness 与 locktime 字段}
+{实验交易的逐字段解析}{fig:tx-fields}
+\resultfigure{27.png}{字段的逐比特二进制表示}{fig:bit-table}
+
+解析器恰好消费 222/222 字节，txid 和 wtxid 均与 Bitcoin Core 结果相同，说明字段
+边界、CompactSize、端序处理以及 witness 剥离过程正确。完整逐 bit 结果保存在
+\code{12-experiment-tx-bytes.tsv} 的 binary 列。
+
+\section{已确认区块与 Coinbase 解析}
+
+\subsection{区块选择}
+
+选取高度 145319 的已确认区块：
+\hashtext{000000000012057bbfe9e5ce7979a8fe06c37ac350808187a97bcce8635404bf}
+该区块共 8 笔交易，raw block 长 2083 字节，stripped size 为 1070，weight 为
+5293，适合完整逐笔解析。选择、长度和区块头信息见图~\ref{fig:block-select}。
+
+\resultpair{15.png}{区块高度与哈希对应}{16.png}{区块及区块头长度}
+{已确认 Testnet4 区块选择}{fig:block-select}
+\resultfigure{17.png}{区块头、交易数与规模信息}{fig:block-info}
+\resultfigure{18.png}{区块声明的交易数与实际解析数量一致}{fig:block-tx-count}
+
+\subsection{Coinbase transaction}
+
+区块位置 0 的交易为 Coinbase，其 txid 与 wtxid 为：
+\hashtext{2526d3c43f26d36cb7683e0f3c5c369ff2819cd3316f70f1d893b26159338473}
+\hashtext{2202b18db31e3b6d9d16ad9afc8a349f250205e9b601261a8f762c49b3ab3939}
+该交易长 188 字节。输入 outpoint 在原始序列化中是 32 字节全零 txid 和
+\code{ffffffff} vout；其 \code{scriptSig} 为
+\code{03a7370200040776616a0c0dc0446a0000000000000000}。首个 push 的 3 字节
+\code{a73702} 以小端解释为 145319，符合 BIP34 区块高度。
+
+Coinbase 的 sequence 为 $0xffffffff$，witness reserved value 为 32 字节全零。
+它有两个输出：第一个向 P2WPKH 地址支付 50.00002049 tBTC；第二个是 0 金额
+OP\_RETURN，格式为
+\[
+\mathtt{6a\ 24\ aa21a9ed\ <32\mbox{-}byte\ commitment>}.
+\]
+Coinbase 输入、输出金额和 commitment 见图~\ref{fig:coinbase-evidence}。
+
+\resultfigure{19.png}{Coinbase transaction 的特殊输入结构}{fig:coinbase-evidence}
+\resultpair{20.png}{Coinbase 总输出}{21.png}{SegWit witness commitment}
+{Coinbase 奖励与 witness 承诺}{fig:coinbase-commitment}
+\resultpair{22.png}{Coinbase raw hex hexdump}{23.png}{区块中的 8 笔交易列表}
+{Coinbase 原始编码与区块交易索引}{fig:coinbase-raw-list}
+
+同一 \code{parse_tx.py} 对 Coinbase raw hex 解析出 188/188 字节，自动识别
+\code{is_coinbase} 为 true，并解析出高度 145319，同时重算 txid、wtxid。结果见
+图~\ref{fig:coinbase-parser}。
+
+\resultfigure{28.png}{Coinbase 独立解析与哈希验证}{fig:coinbase-parser}
+\resultfigure{29.png}{Coinbase outpoint、scriptSig 与 witness 结果}{fig:coinbase-fields}
+
+\section{Block、Merkle root 与 PoW 独立验证}
+
+编写 \code{parse_block.py}，从 \code{10-block.hex} 的偏移 0 开始读取 80 字节
+区块头，再解析 CompactSize 交易数并循环调用交易边界解析器。程序得到 8 笔交易，
+最终游标为 2083，与 raw block 长度相同。
+
+区块头关键结果如下：
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lp{10.5cm}}
+    \toprule
+    字段 & 值 \\
+    \midrule
+    version & 849559552（\code{32a34000}）\\
+    previous block hash & \code{0000000000b4ebcf...0e7b47d1465} \\
+    Merkle root & \code{af20a4e3aa86a46c...8b103e97320c2726} \\
+    timestamp & 1784780486 \\
+    nBits & \code{1d00ffff} \\
+    nonce & 3190817204 \\
+    target & \code{00000000ffff0000...0000000000000000} \\
+    block hash & \code{000000000012057b...a97bcce8635404bf} \\
+    \bottomrule
+  \end{tabular}
+  \caption{独立解析的区块头结果}
+\end{table}
+
+由 \code{1d00ffff} 得 $e=0x1d$、$c=0x00ffff$，从而
+\[
+T=\mathtt{00000000ffff0000\ldots0000}.
+\]
+区块头 SHA256d 对应整数为
+\[
+H=\mathtt{000000000012057bbfe9e5ce\ldots a97bcce8635404bf},
+\]
+显然 $H<T$，故 PoW 有效。
+
+程序以所有交易的内部字节序 txid 构造 Merkle tree，计算结果为：
+\hashtext{af20a4e3aa86a46c636d2ee2631b69a3fe5d677eb5a1135d8b103e97320c2726}
+它与头部完全一致。对 witness tree，将 Coinbase wtxid 叶子置零，得到 witness
+Merkle root：
+\hashtext{b9233c8d1e679864d92b9754262dfd1239c36a9f1c4b9389980e37f50f20d467}
+再与 32 字节 reserved value 拼接做 SHA256d，得到：
+\hashtext{b36e61fb7af98bde2bca631f60d4499d42dbd77f27779a2b1f3201041e5d0246}
+与 Coinbase OP\_RETURN 中存储的 commitment 一致。
+
+\begin{lstlisting}[style=cmd,caption={区块独立验证结果}]
+All Block Bytes Consumed: PASS
+Transaction Count: PASS
+Block Hash: PASS
+Proof Of Work: PASS
+Merkle Root: PASS
+Witness Commitment: PASS
+Coinbase First: PASS
+\end{lstlisting}
+
+上述结果来自 \code{14-block-verification.txt}，而非 Bitcoin Core 对同一字段的直接
+复述。Core JSON 仅作为交叉对照。至此，Block、Transaction、Coinbase、Input、
+Output、scriptPubKey、scriptSig/witness 和 PoW 均获得了独立解析或验证。
+
+\section{实验结果讨论}
+
+\begin{enumerate}
+  \item \textbf{字节序是最主要的实现陷阱。} 数值字段采用小端，而 RPC 显示的
+  txid、block hash、Merkle root 通常为内部哈希字节反转后的阅读顺序。
+  \item \textbf{txid 与 wtxid 承诺范围不同。} 本实验签名写入 witness 后 txid
+  不变，而 wtxid 改变，实际结果验证了 SegWit 的隔离设计。
+  \item \textbf{scriptSig 为空不代表没有解锁数据。} 原生 P2WPKH 使用 witness
+  中的签名和公钥完成解锁；Coinbase 虽有 scriptSig，却不引用普通 UTXO。
+  \item \textbf{未确认不影响序列化研究。} 自建交易已通过节点规则、广播并在公共
+  浏览器可见；确认只影响其是否被某个区块承诺。区块和 PoW 部分使用独立的已确认
+  Testnet4 区块，二者研究对象和结论边界在报告中明确区分。
+  \item \textbf{PoW 验证不仅是观察前导零。} 程序从 nBits 恢复 256 位 target，
+  将 SHA256d 结果按共识所需整数解释并做严格不等式比较。
+\end{enumerate}
+
+\section{结论}
+
+本实验成功在 Bitcoin Testnet4 上构造、签名并广播一笔 P2WPKH 交易，保存其
+222 字节 raw hex，并逐字段、逐字节和逐 bit 解析。独立程序重算的 txid 与 wtxid
+均与 Bitcoin Core 相同。实验进一步解析高度 145319 的完整区块及 Coinbase，
+验证 8 笔交易边界、BIP34 高度、奖励输出和 SegWit commitment。最后从 80 字节
+区块头重算区块哈希、Merkle root、target 与 PoW，全部检查通过。实验由此完整建立
+了从 UTXO、Script、交易序列化到区块承诺和工作量证明的层次化理解。
+
+\section{复现实验命令}
+
+\begin{lstlisting}[style=cmd]
+# 交易逐字节解析
+python3 parse_tx.py 05-signed.hex \
+  --expected-txid dea08b1b3e8595314a7affd5e0299b81537c48eb78b8634d317f0c4f44011d5f \
+  --expected-wtxid df9cc5342bca17c969b665ae32f133dd1d0d86b6b8e09fa0c4ce41898f416a29 \
+  --prefix 12-experiment-tx
+
+# Coinbase 逐字节解析
+python3 parse_tx.py 11-coinbase.hex \
+  --expected-txid 2526d3c43f26d36cb7683e0f3c5c369ff2819cd3316f70f1d893b26159338473 \
+  --expected-wtxid 2202b18db31e3b6d9d16ad9afc8a349f250205e9b601261a8f762c49b3ab3939 \
+  --prefix 13-coinbase
+
+# 完整区块、Merkle root、witness commitment 和 PoW
+python3 parse_block.py 10-block.hex \
+  --expected-hash 000000000012057bbfe9e5ce7979a8fe06c37ac350808187a97bcce8635404bf \
+  --prefix 14-block
+\end{lstlisting}
+
+\appendix
+\section{核心程序}
+
+完整源代码随报告提交。交易解析程序为 \code{parse_tx.py}，区块验证程序为
+\code{parse_block.py}。二者只使用 Python 标准库。为控制报告篇幅，不在正文重复
+打印全部逐 bit TSV；\path{12-experiment-tx-bytes.tsv}、
+\path{13-coinbase-bytes.tsv} 和 \path{14-block-header-bytes.tsv} 作为实验附件提交。
+
+\section{参考资料}
+
+\begin{enumerate}
+  \item Bitcoin Developer Reference, Transactions：
+  \url{https://developer.bitcoin.org/reference/transactions.html}。
+  \item Bitcoin Developer Reference, Block Chain：
+  \url{https://developer.bitcoin.org/reference/block_chain.html}。
+  \item BIP 34, Block v2, Height in Coinbase：\url{https://bips.dev/34/}。
+  \item BIP 141, Segregated Witness：\url{https://bips.dev/141/}。
+  \item BIP 143, Transaction Signature Verification for Version 0 Witness Program：
+  \url{https://bips.dev/143/}。
+  \item BIP 94, Testnet 4：\url{https://bips.dev/94/}。
+\end{enumerate}
+
+\end{document}
