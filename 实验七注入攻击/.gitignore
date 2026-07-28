@@ -1,0 +1,20 @@
+# LaTeX 编译产物（保留 exp7-1.pdf 本身，忽略中间文件）
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.blg
+
+# Python
+__pycache__/
+*.pyc
+
+# garak 原始测评日志体积较大（数十 MB），不纳入版本控制
+# 如需要完整原始数据，请参考 README 中的复现步骤自行生成
+*.report.jsonl
+*.hitlog.jsonl
+*.report.html
