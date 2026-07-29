@@ -1,0 +1,3 @@
+/home/user/Desktop/fhe_conv_seal/build/CMakeFiles/fhe_conv.dir
+/home/user/Desktop/fhe_conv_seal/build/CMakeFiles/edit_cache.dir
+/home/user/Desktop/fhe_conv_seal/build/CMakeFiles/rebuild_cache.dir
