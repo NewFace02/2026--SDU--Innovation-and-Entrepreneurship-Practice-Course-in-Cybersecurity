@@ -1,0 +1,6 @@
+# SM4 standard single-block test vector
+#
+# Key/plaintext:
+#   0123456789abcdeffedcba9876543210
+# Ciphertext:
+#   681edf34d206965e86b3e94f536e4246

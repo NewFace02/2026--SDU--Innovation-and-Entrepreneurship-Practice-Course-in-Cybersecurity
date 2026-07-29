@@ -1,0 +1,11 @@
+# AES-128 / GCM standard vectors used by src/aes_lab.c
+#
+# AES single-block encryption, FIPS 197 Appendix C.1
+AES128_KEY = 000102030405060708090a0b0c0d0e0f
+AES128_PT  = 00112233445566778899aabbccddeeff
+AES128_CT  = 69c4e0d86a7b0430d8cdb78070b4c55a
+
+# AES-GCM empty plaintext and empty AAD, NIST SP 800-38D sample
+GCM_KEY = 00000000000000000000000000000000
+GCM_IV  = 000000000000000000000000
+GCM_TAG = 58e2fccefa7e3061367f1d57a4e7455a

@@ -1,0 +1,27 @@
+Command:
+  make run
+
+Environment:
+  WSL Ubuntu, GCC 13.3.0
+  CFLAGS = -O3 -Wall -Wextra -std=c11 -march=native
+  Input file = data/bench_16MiB.bin, 16777216 bytes
+
+Correctness:
+  AES reference            ok
+  AES 4-table              ok
+  AES T2-table             ok
+  AES-NI                   ok
+  CTR ref vs AES-NI        ok
+  CTR ref vs Ttable8       ok
+  GCM empty vector         ok
+  XTS round trip           ok
+
+Combined benchmark:
+  CTR reference               98.77 MiB/s
+  CTR 4-table                336.29 MiB/s
+  CTR 4-table+shuffle+AVX2   438.81 MiB/s
+  CTR T2-table               332.14 MiB/s
+  CTR AES-NI single         1193.14 MiB/s
+  CTR AES-NI+shuffle+AVX2   2142.47 MiB/s
+  GCM CTR+AES-NI+GHASH        29.25 MiB/s
+  XTS AES-NI+tweak          1147.61 MiB/s

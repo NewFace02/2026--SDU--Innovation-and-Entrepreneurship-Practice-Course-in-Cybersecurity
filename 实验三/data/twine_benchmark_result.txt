@@ -1,0 +1,19 @@
+Command:
+  make twine
+
+Latest result:
+  TWINE scalar vs AVX2           ok
+  TWINE scalar S-box layer         571.98 MiB/s
+  TWINE scalar perm layer          795.66 MiB/s
+  TWINE scalar one round           411.12 MiB/s
+  TWINE scalar 36 rounds            14.63 MiB/s
+  TWINE AVX2 vpshufb S-box         790.40 MiB/s
+  TWINE AVX2 vpshufb               364.26 MiB/s
+
+Notes:
+  TWINE is implemented in a separate file. Segment timing shows neither the
+  scalar S-box layer nor the scalar permutation layer alone dominates; the cost
+  comes from repeating the round 36 times and moving data between scalar block
+  layout and vector nibble-slice layout. The optimized path packs 16 blocks by
+  nibble position into ymm registers. The S-box maps to vpshufb through
+  _mm256_shuffle_epi8; the nibble permutation maps to register reassignment.

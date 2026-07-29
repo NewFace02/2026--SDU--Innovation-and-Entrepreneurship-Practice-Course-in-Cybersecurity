@@ -1,0 +1,22 @@
+Command:
+  make sm4
+
+Environment:
+  WSL Ubuntu, GCC 13.3.0
+  CFLAGS = -O3 -Wall -Wextra -std=c11 -march=native
+  Input file = data/bench_16MiB.bin, 16777216 bytes
+
+Correctness:
+  SM4 reference                ok
+  SM4 4-table                  ok
+  SM4 T-box2                   ok
+  SM4 AVX2 8-way               ok
+  SM4 XTS round trip           ok
+
+SM4 mode benchmark:
+  CTR reference                  112.94 MiB/s
+  CTR 4-table                    157.64 MiB/s
+  CTR T-box2                     164.08 MiB/s
+  CTR AVX2 8-way gather          335.98 MiB/s
+  GCM CTR+AVX2+4bit GHASH         28.07 MiB/s
+  XTS T-box2+tweak               190.20 MiB/s

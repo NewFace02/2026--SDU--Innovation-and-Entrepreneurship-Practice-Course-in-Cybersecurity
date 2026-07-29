@@ -1,0 +1,17 @@
+Command:
+  make gift
+
+Latest result:
+  GIFT AVX2 S-box kernel         ok
+  GIFT scalar S-box layer          825.08 MiB/s
+  GIFT scalar P-layer              138.52 MiB/s
+  GIFT scalar one round            125.66 MiB/s
+  GIFT scalar 28 rounds              4.59 MiB/s
+  GIFT AVX2 vpshufb S-box          909.71 MiB/s
+
+Notes:
+  GIFT is implemented in a separate file. Segment timing shows the scalar
+  P-layer is much slower than the scalar S-box layer, so the real full-round
+  hotspot is the bit permutation layer. The AVX2 vpshufb S-box kernel is fast,
+  but it does not solve the P-layer bottleneck. A full-speed version should use
+  fixslice/bitslice or carefully evaluated BMI2 pext/pdep.
