@@ -1,0 +1,28 @@
+---
+system:
+  verbose: 0
+  narrow_output: false
+  parallel_requests: false
+  parallel_attempts: false
+
+run:
+  deprefix: true
+  eval_threshold: 0.5
+
+plugins:
+  target_type: huggingface
+  target_name: "/mnt/g/garak-qwen/models/Qwen2.5-0.5B-Instruct"
+  detector_spec: auto
+  extended_detectors: false
+
+  generators:
+    huggingface:
+      Pipeline:
+        max_tokens: 256
+
+reporting:
+  report_dir: "/mnt/g/2026_SDU_Innovation_Entrepreneurship_Practice_in_Cybersecurity/实验七数据泄露/reports"
+  show_100_pass_modules: true
+  show_group_score: true
+  show_top_group_score: true
+  group_aggregation_function: lower_quartile
